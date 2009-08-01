@@ -6,7 +6,7 @@
 Summary:	DSO module for the apache web server
 Name:		apache-%{mod_name}
 Version:	0.0.2
-Release:	%mkrel 10
+Release:	%mkrel 11
 Group:		System/Servers
 License:	GPL
 URL:		http://www.twlc.net/
