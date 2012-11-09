@@ -1,0 +1,74 @@
+--- mod_protection.c	2005-12-16 05:20:48.000000000 +0100
++++ mod_protection.c.oden	2005-12-16 05:20:16.000000000 +0100
+@@ -379,9 +379,9 @@
+ 
+ typedef struct {
+     char *fake_u;
+-    regex_t *regexp_u;
++    ap_regex_t *regexp_u;
+     char *fake_a;
+-    regex_t *regexp_a;
++    ap_regex_t *regexp_a;
+     pro_ap_entry_type type;
+ } protection_entry;
+ 
+@@ -408,7 +408,7 @@
+     void *sconf = r->server->module_config;
+     protection_server_conf *serverconf =
+ 	(protection_server_conf *) ap_get_module_config(sconf, &protection_module);
+-    int sd, i, nbytes;
++    apr_size_t sd, i, nbytes;
+     char *msg = NULL;
+     protection_host *hosts = (protection_host *) serverconf->hosts->elts;
+ 
+@@ -440,17 +440,16 @@
+ 		continue;
+ 
+ 	    /* create a new socket */
+-	    if ((rv = apr_socket_create(&sock, el->connect_addr->family, SOCK_STREAM, r->pool)) != APR_SUCCESS) {
++	    if ((rv = apr_socket_create(&sock, el->connect_addr->family, SOCK_STREAM, APR_PROTO_TCP, r->pool)) != APR_SUCCESS) {
+ 	    }
+ 
+-	    apr_setsocketopt(sock, APR_SO_TIMEOUT,
+-			     (int)(r->server->timeout * APR_USEC_PER_SEC));
++	    apr_socket_timeout_set(sock, (int)(r->server->timeout * APR_USEC_PER_SEC));
+ 
+ 	    /* make the connection out of the socket */
+-	    rv = apr_connect(sock, el->connect_addr);
++	    rv = apr_socket_connect(sock, el->connect_addr);
+ 
+             nbytes = strlen(msg);
+-	    apr_send(sock, msg, &nbytes);
++	    apr_socket_send(sock, msg, &nbytes);
+ 
+ 	    ap_log_error(APLOG_MARK, APLOG_ERR, 0, NULL, "protection: connect rv %d!",rv);
+ 
+@@ -570,7 +569,7 @@
+     protection_entry *new = apr_array_push(conf->uris);
+     if (t&PRO_AP_URI) {
+ 	if (use_regex) {
+-	    new->regexp_u = ap_pregcomp(cmd->pool, f_u, REG_EXTENDED);
++	    new->regexp_u = ap_pregcomp(cmd->pool, f_u, AP_REG_EXTENDED);
+ 	    if (new->regexp_u == NULL)
+ 		return "Regular expression could not be compiled.";
+ 	}
+@@ -578,7 +577,7 @@
+     }
+     if (t&PRO_AP_ARG) {
+ 	if (use_regex) {
+-	    new->regexp_a = ap_pregcomp(cmd->pool, f_a, REG_EXTENDED);
++	    new->regexp_a = ap_pregcomp(cmd->pool, f_a, AP_REG_EXTENDED);
+ 	    if (new->regexp_a == NULL)
+ 		return "Regular expression could not be compiled.";
+ 	}
+@@ -679,8 +678,8 @@
+ static char *try_protection_list(request_rec *r, protection_server_conf *serverconf, int *arg)
+ {
+     protection_entry *entries = (protection_entry *) serverconf->uris->elts;
+-    regmatch_t regm[10];
+-    regex_t *regexp;
++    ap_regmatch_t regm[10];
++    ap_regex_t *regexp;
+     char *found = NULL;
+     char *m = NULL;
+     char *comp = NULL;
