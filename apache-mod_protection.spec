@@ -9,7 +9,7 @@ Version:	0.0.2
 Release:	%mkrel 15
 Group:		System/Servers
 License:	GPL
-URL:		http://www.twlc.net/
+URL:		https://www.twlc.net/
 Source0:	%{mod_name}2-%{version}.tar.bz2
 Source1:	%{mod_conf}.bz2
 Patch0:		mod_protection2-0.0.2-register.patch
